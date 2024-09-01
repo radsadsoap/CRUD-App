@@ -1,0 +1,72 @@
+<%- include("dashboard")%>
+
+<div class="px-10 p-4">
+    <h1 class="text-7xl mb-4">EMI Details</h1>
+</div>
+
+<div class="px-10">
+    <table class="min-w-full bg-white">
+        <tr class="bg-gray-800 text-white">
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Loan ID
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Name
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Interest Rate
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Due Date
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Status
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Remaining Balance
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Penalty
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Payment Date
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                EMI Amount
+            </th>
+        </tr>
+        <tbody class="text-gray-700">
+            <% if (emiList && emiList.length > 0) { %> <% emiList.forEach(emi =>
+            { %>
+            <tr>
+                <td class="text-left py-3 px-4"><%= emi.loan_id %></td>
+                <td class="text-left py-3 px-4"><%= emi.name %></td>
+                <td class="text-left py-3 px-4"><%= emi.interestRate %>%</td>
+                <td class="text-left py-3 px-4">
+                    <%= emi.dueDate.toDateString() %>
+                </td>
+                <td class="text-left py-3 px-4"><%= emi.status %></td>
+                <td class="text-left py-3 px-4">
+                    ₹<%= emi.remainingBalance.toFixed(2) %>
+                </td>
+                <td class="text-left py-3 px-4">
+                    ₹<%= emi.penalty.toFixed(2) %>
+                </td>
+                <td class="text-left py-3 px-4">
+                    <%= emi.payment_date ? emi.payment_date.toDateString() :
+                    'Not paid' %>
+                </td>
+                <td class="text-left py-3 px-4">
+                    ₹<%= emi.emi_amount.toFixed(2) %>
+                </td>
+            </tr>
+            <% }); %> <% } else { %>
+            <tr>
+                <td colspan="9" class="text-center py-3 px-4">
+                    No EMI records found
+                </td>
+            </tr>
+            <% } %>
+        </tbody>
+    </table>
+</div>

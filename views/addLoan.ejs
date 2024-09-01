@@ -1,0 +1,136 @@
+<%- include("dashboard")%>
+
+<form action="/addloanSubmit" method="post">
+    <div class="flex flex-col p-4 w-1/3 gap-5 justify-center m-auto h-[80vh]">
+        <div class="flex justify-between">
+            Enter Holders Name
+            <input
+                type="text"
+                name="name"
+                placeholder="Enter Name"
+                class="rounded-md pl-2"
+                required
+            />
+        </div>
+        <div>
+            <h1 class="pb-2">Select Loan Type</h1>
+            <div class="flex justify-between">
+                <button
+                    type="button"
+                    class="loan-type border border-gray-300 p-4"
+                    data-type="Personal"
+                >
+                    Personal
+                </button>
+                <button
+                    type="button"
+                    class="loan-type border border-gray-300 p-4"
+                    data-type="Home"
+                >
+                    Home
+                </button>
+                <button
+                    type="button"
+                    class="loan-type border border-gray-300 p-4"
+                    data-type="Gold"
+                >
+                    Gold
+                </button>
+                <button
+                    type="button"
+                    class="loan-type border border-gray-300 p-4"
+                    data-type="Vehicle"
+                >
+                    Vehicle
+                </button>
+            </div>
+            <input type="hidden" name="loanType" id="loanType" required />
+        </div>
+        <div class="flex justify-between">
+            Enter Amount
+            <input
+                type="number"
+                name="amount"
+                placeholder="Enter Amount"
+                class="rounded-md pl-2"
+                required
+            />
+        </div>
+        <div>
+            <h1 class="pb-2">Select Tenure</h1>
+            <div class="flex justify-between">
+                <button
+                    type="button"
+                    class="tenure border border-gray-300 p-4"
+                    data-months="6"
+                >
+                    6M
+                </button>
+                <button
+                    type="button"
+                    class="tenure border border-gray-300 p-4"
+                    data-months="12"
+                >
+                    12M
+                </button>
+                <button
+                    type="button"
+                    class="tenure border border-gray-300 p-4"
+                    data-months="24"
+                >
+                    24M
+                </button>
+                <button
+                    type="button"
+                    class="tenure border border-gray-300 p-4"
+                    data-months="36"
+                >
+                    36M
+                </button>
+            </div>
+            <input type="hidden" name="months" id="months" required />
+        </div>
+        <div class="flex justify-between">
+            Select Bank
+            <select name="lender_id" class="rounded-md pl-2" required>
+                <option value="">Select a bank</option>
+                <option value="bank1">Bank 1</option>
+                <option value="bank2">Bank 2</option>
+                <option value="bank3">Bank 3</option>
+            </select>
+        </div>
+        <button type="submit" class="bg-black text-white rounded-md p-2">
+            Submit
+        </button>
+    </div>
+</form>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const loanTypeButtons = document.querySelectorAll(".loan-type");
+        const tenureButtons = document.querySelectorAll(".tenure");
+        const loanTypeInput = document.getElementById("loanType");
+        const monthsInput = document.getElementById("months");
+
+        function selectButton(buttons, selectedButton, hiddenInput) {
+            buttons.forEach((button) =>
+                button.classList.remove("bg-black", "text-white")
+            );
+            selectedButton.classList.add("bg-black", "text-white");
+            hiddenInput.value =
+                selectedButton.dataset.type || selectedButton.dataset.months;
+        }
+
+        loanTypeButtons.forEach((button) => {
+            button.addEventListener("click", function () {
+                selectButton(loanTypeButtons, this, loanTypeInput);
+            });
+        });
+
+        tenureButtons.forEach((button) => {
+            button.addEventListener("click", function () {
+                selectButton(tenureButtons, this, monthsInput);
+            });
+        });
+    });
+</script>

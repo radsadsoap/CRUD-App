@@ -1,0 +1,110 @@
+<%- include("dashboard")%>
+
+<form action="/addexpensesSubmit" method="post">
+    <div class="flex flex-col p-4 w-1/3 gap-5 justify-center m-auto h-[80vh]">
+        <div class="flex justify-between">
+            Enter Name
+            <input
+                type="text"
+                name="name"
+                placeholder="Enter Name"
+                class="rounded-md pl-2"
+                required
+            />
+        </div>
+        <div>
+            <h1 class="pb-2">Select Category</h1>
+            <div class="flex justify-between">
+                <button
+                    type="button"
+                    class="category-type border border-gray-300 p-4"
+                    data-type="Insurance"
+                >
+                    Insurance
+                </button>
+                <button
+                    type="button"
+                    class="category-type border border-gray-300 p-4"
+                    data-type="Education"
+                >
+                    Education
+                </button>
+                <button
+                    type="button"
+                    class="category-type border border-gray-300 p-4"
+                    data-type="Travel"
+                >
+                    Travel
+                </button>
+                <button
+                    type="button"
+                    class="category-type border border-gray-300 p-2"
+                    data-type="Commercial"
+                >
+                    Commercial
+                </button>
+                <button
+                    type="button"
+                    class="category-type border border-gray-300 p-4"
+                    data-type="Other"
+                >
+                    Other
+                </button>
+            </div>
+            <input
+                type="hidden"
+                name="categoryType"
+                id="categoryType"
+                required
+            />
+        </div>
+        <div class="flex justify-between">
+            Enter Amount
+            <input
+                type="number"
+                name="amount"
+                placeholder="Enter Amount"
+                class="rounded-md pl-2"
+                required
+            />
+        </div>
+        <div class="flex justify-between">
+            Date of Purchase
+            <input type="date" name="dop" class="rounded-md pl-2" required />
+        </div>
+        <div class="flex flex-col gap-2">
+            Description
+            <textarea
+                name="description"
+                rows="5"
+                class="rounded-md pl-2 text-gray-300"
+            >
+Add Something</textarea
+            >
+        </div>
+        <button type="submit" class="bg-black text-white rounded-md p-2">
+            Submit
+        </button>
+    </div>
+</form>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const categoryTypeButtons = document.querySelectorAll(".category-type");
+        const categoryTypeInput = document.getElementById("categoryType");
+
+        function selectButton(buttons, selectedButton, hiddenInput) {
+            buttons.forEach((button) =>
+                button.classList.remove("bg-black", "text-white")
+            );
+            selectedButton.classList.add("bg-black", "text-white");
+            hiddenInput.value = selectedButton.dataset.type;
+        }
+
+        categoryTypeButtons.forEach((button) => {
+            button.addEventListener("click", function () {
+                selectButton(categoryTypeButtons, this, categoryTypeInput);
+            });
+        });
+    });
+</script>

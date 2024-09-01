@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                text-decoration: none;
+            }
+            .auth-button {
+                color: white;
+                border-radius: 10px;
+                background-color: black;
+                padding: 5px 20px;
+            }
+        </style>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100 h-screen">
+        <div
+            class="p-4 flex text-lg bg-white rounded-md justify-between items-center"
+        >
+            <div class="rounded-md border border-gray-300 px-2">
+                <% if (typeof user !== 'undefined' && user) { %>
+                <h3 class="font-bold">Welcome <%= user.name %>!</h3>
+                <p><%= user.email %></p>
+                <% } %>
+            </div>
+
+            <div class="flex gap-4 items-center">
+                <div
+                    class="flex gap-4 px-4 py-1 border border-gray-300 rounded-md"
+                >
+                    <a href="/loan">Loan</a>
+                    <a href="/emi">Emi</a>
+                    <a href="/expenses">Expenses</a>
+                </div>
+                <div>
+                    <% if (typeof user !== 'undefined' && user) { %>
+                    <a href="/logout" class="auth-button">Logout</a>
+                    <% } else { %>
+                    <a href="/login" class="auth-button">Login</a>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

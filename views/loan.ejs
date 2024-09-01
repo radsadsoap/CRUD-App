@@ -1,0 +1,66 @@
+<%- include("dashboard") %>
+
+<div class="px-10 p-4">
+    <h1 class="text-7xl mb-4">Your Loans</h1>
+    <form action="/addloan" method="get">
+        <button
+            type="submit"
+            class="bg-black text-white rounded-md p-2 mt-4 mb-8"
+        >
+            Add Loan
+        </button>
+    </form>
+</div>
+
+<div class="px-10">
+    <table class="min-w-full bg-white">
+        <tr class="bg-gray-800 text-white">
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Loan ID
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Name
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Loan Type
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Amount
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Interest Rate
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Tenure (Months)
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Total Amount
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Lender ID
+            </th>
+        </tr>
+        <tbody class="text-gray-700">
+            <% if (loans && loans.length > 0) { %> <% loans.forEach(loan => { %>
+            <tr>
+                <td class="text-left py-3 px-4"><%= loan.loan_id %></td>
+                <td class="text-left py-3 px-4"><%= loan.name %></td>
+                <td class="text-left py-3 px-4"><%= loan.loanType %></td>
+                <td class="text-left py-3 px-4">
+                    ₹<%= loan.amount.toFixed(2) %>
+                </td>
+                <td class="text-left py-3 px-4"><%= loan.interestRate %>%</td>
+                <td class="text-left py-3 px-4"><%= loan.months %></td>
+                <td class="text-left py-3 px-4">₹<%= loan.totalAmount %></td>
+                <td class="text-left py-3 px-4"><%= loan.lender_id %></td>
+            </tr>
+            <% }); %> <% } else { %>
+            <tr>
+                <td colspan="8" class="text-center py-3 px-4">
+                    No loans found
+                </td>
+            </tr>
+            <% } %>
+        </tbody>
+    </table>
+</div>
