@@ -23,7 +23,7 @@ app.get("/", (req, res) => {
     if (req.session.msg != undefined && req.session.msg != "") {
         msg = req.session.msg;
     }
-    res.render("home", { msg: msg });
+    res.redirect("/login");
 });
 
 app.get("/login", (req, res) => {

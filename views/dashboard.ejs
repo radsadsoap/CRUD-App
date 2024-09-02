@@ -15,19 +15,30 @@
                 background-color: black;
                 padding: 5px 20px;
             }
+            input {
+                outline: none;
+            }
         </style>
         <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            function redirect() {
+                window.location.href = "/dashboard";
+            }
+        </script>
     </head>
     <body class="bg-gray-100 h-screen">
         <div
             class="p-4 flex text-lg bg-white rounded-md justify-between items-center"
         >
-            <div class="rounded-md border border-gray-300 px-2">
+            <button
+                class="rounded-md border border-gray-300 px-2 text-left"
+                onclick="redirect()"
+            >
                 <% if (typeof user !== 'undefined' && user) { %>
                 <h3 class="font-bold">Welcome <%= user.name %>!</h3>
                 <p><%= user.email %></p>
                 <% } %>
-            </div>
+            </button>
 
             <div class="flex gap-4 items-center">
                 <div
