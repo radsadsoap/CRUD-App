@@ -36,7 +36,6 @@ app.post("/loginSubmit", async (req, res) => {
     const existingUser = await users.findOne({ email: req.body.email });
     if (existingUser) {
         if (existingUser.password === req.body.password) {
-            req.session.msg = "Logged in successfully";
             req.session.user = {
                 name: existingUser.username,
                 email: existingUser.email,
@@ -54,7 +53,6 @@ app.post("/loginSubmit", async (req, res) => {
         });
 
         if (result.acknowledged === true) {
-            req.session.msg = "Logged in successfully";
             req.session.user = {
                 name: req.body.name,
                 email: req.body.email,
@@ -394,6 +392,126 @@ app.post("/editExpensesSubmit", async (req, res) => {
     }
 
     res.redirect("/expenses");
+});
+
+app.get("/profile", async (req, res) => {
+    if (!req.session.user) {
+        return res.redirect("/login");
+    }
+
+    try {
+        const usersCollection = db.collection("users");
+        const usersList = await usersCollection.find({}).toArray();
+
+        res.render("profile", {
+            user: req.session.user,
+            users: usersList,
+            msg: req.session.msg || "", // Use an empty string if msg is undefined
+        });
+        req.session.msg = ""; // Clear the message after rendering
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        res.render("profile", {
+            user: req.session.user,
+            users: [],
+            msg: "An error occurred while fetching users",
+        });
+    }
+});
+
+app.get("/editUser", async (req, res) => {
+    if (!req.session.user) {
+        return res.redirect("/login");
+    }
+
+    const userId = req.query.id;
+    const usersCollection = db.collection("users");
+
+    try {
+        const user = await usersCollection.findOne({
+            _id: new ObjectId(userId),
+        });
+
+        if (user) {
+            res.render("editUser", {
+                user: req.session.user,
+                editUser: user,
+            });
+        } else {
+            req.session.msg = "User not found";
+            res.redirect("/profile");
+        }
+    } catch (error) {
+        console.error("Error fetching user for edit:", error);
+        req.session.msg = "An error occurred while fetching the user";
+        res.redirect("/profile");
+    }
+});
+
+app.post("/editUserSubmit", async (req, res) => {
+    if (!req.session.user) {
+        return res.redirect("/login");
+    }
+
+    const usersCollection = db.collection("users");
+    const { userId, username, email, newPassword, confirmPassword } = req.body;
+
+    try {
+        const updateData = {
+            username: username,
+            email: email,
+        };
+
+        if (newPassword && confirmPassword) {
+            if (newPassword !== confirmPassword) {
+                req.session.msg = "Passwords do not match";
+                return res.redirect(`/editUser?id=${userId}`);
+            }
+            updateData.password = newPassword;
+        }
+
+        const result = await usersCollection.updateOne(
+            { _id: new ObjectId(userId) },
+            { $set: updateData }
+        );
+
+        if (result.modifiedCount === 1) {
+            req.session.msg = "User updated successfully";
+        } else {
+            req.session.msg = "No changes were made to the user";
+        }
+    } catch (error) {
+        console.error("Error updating user:", error);
+        req.session.msg = "An error occurred while updating the user";
+    }
+
+    res.redirect("/profile");
+});
+
+app.get("/deleteUser", async (req, res) => {
+    if (!req.session.user) {
+        return res.redirect("/login");
+    }
+
+    const userId = req.query.id;
+    const usersCollection = db.collection("users");
+
+    try {
+        const result = await usersCollection.deleteOne({
+            _id: new ObjectId(userId),
+        });
+
+        if (result.deletedCount === 1) {
+            req.session.msg = "User deleted successfully";
+        } else {
+            req.session.msg = "Failed to delete user";
+        }
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        req.session.msg = "An error occurred while deleting the user";
+    }
+
+    res.redirect("/profile");
 });
 
 app.listen(PORT, () => {
