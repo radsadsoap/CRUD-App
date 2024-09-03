@@ -19,499 +19,366 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
-    let msg = "";
-    if (req.session.msg != undefined && req.session.msg != "") {
-        msg = req.session.msg;
-    }
-    res.redirect("/login");
+    res.render("dashboard");
 });
 
-app.get("/login", (req, res) => {
-    res.render("login");
-});
-
-app.post("/loginSubmit", async (req, res) => {
-    const users = db.collection("users");
-
-    const existingUser = await users.findOne({ email: req.body.email });
-    if (existingUser) {
-        if (existingUser.password === req.body.password) {
-            req.session.user = {
-                name: existingUser.username,
-                email: existingUser.email,
-            };
-            res.redirect("/dashboard");
-        } else {
-            req.session.msg = "Login failed";
-            res.redirect("/login");
-        }
-    } else {
-        const result = await users.insertOne({
-            username: req.body.name,
-            email: req.body.email,
-            password: req.body.password,
-        });
-
-        if (result.acknowledged === true) {
-            req.session.user = {
-                name: req.body.name,
-                email: req.body.email,
-            };
-            res.redirect("/dashboard");
-        } else {
-            req.session.msg = "Login failed";
-            res.redirect("/");
-        }
-    }
-});
-
-app.get("/logout", (req, res) => {
-    req.session.destroy((err) => {
-        if (err) {
-            console.log(err);
-        }
-        res.redirect("/");
-    });
-});
-
-app.get("/dashboard", (req, res) => {
-    if (req.session.user) {
-        res.render("dashboard", { user: req.session.user });
-    } else {
-        res.redirect("/login");
-    }
-});
-
-app.get("/loan", async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect("/login");
-    }
-
+app.get("/user", async (req, res) => {
     try {
-        const loans = db.collection("loans");
-        const loanList = await loans
-            .find({ userEmail: req.session.user.email })
-            .toArray();
-        res.render("loan", { user: req.session.user, loans: loanList });
-    } catch (err) {
-        console.error("Error fetching loans:", err);
-        req.session.msg = "An error occurred while fetching loans";
-        res.render("loan", { user: req.session.user, loans: [] });
-    }
-});
-
-app.get("/addloan", (req, res) => {
-    if (req.session.user) {
-        res.render("addloan", { user: req.session.user });
-    } else {
-        res.redirect("/login");
-    }
-});
-
-app.post("/addloanSubmit", async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect("/login");
-    }
-
-    const loans = db.collection("loans");
-
-    const loan_id = Date.now().toString();
-
-    const interestRates = {
-        Personal: 10,
-        Home: 7,
-        Gold: 8,
-        Vehicle: 9,
-    };
-    const interestRate = interestRates[req.body.loanType] || 10;
-
-    const amount = parseFloat(req.body.amount);
-    const months = parseInt(req.body.months);
-
-    const totalInterest = (amount * interestRate * (months / 12)) / 100;
-
-    const r = interestRate / (12 * 100);
-    const emi =
-        (amount * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
-    const totalAmount = emi * months;
-
-    const newLoan = {
-        userEmail: req.session.user.email,
-        loan_id: loan_id,
-        loanType: req.body.loanType,
-        amount: amount,
-        name: req.body.name,
-        interestRate: interestRate,
-        months: months,
-        lender_id: req.body.lender_id,
-        totalAmount: parseFloat(totalAmount.toFixed(2)),
-    };
-
-    try {
-        const result = await loans.insertOne(newLoan);
-        if (result.acknowledged) {
-            req.session.msg = "Loan added successfully";
-            res.redirect("/loan");
-        } else {
-            req.session.msg = "Failed to add loan";
-            res.redirect("/addloan");
-        }
+        const users = await db.collection("users").find().toArray();
+        res.render("user", { users, msg: req.query.msg });
     } catch (error) {
-        console.error("Error adding loan:", error);
-        req.session.msg = "An error occurred while adding the loan";
-        res.redirect("/addloan");
+        console.error(error);
+        res.status(500).send("Error fetching users");
     }
 });
 
-app.get("/emi", async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect("/login");
-    }
+app.get("/addUser", (req, res) => {
+    res.render("addUser");
+});
 
+app.post("/addUserSubmit", async (req, res) => {
+    const { username, email, password } = req.body;
     try {
-        const loans = db.collection("loans");
-        const emiCollection = db.collection("emi");
-
-        const loanList = await loans
-            .find({ userEmail: req.session.user.email })
-            .toArray();
-
-        for (const loan of loanList) {
-            const { loan_id, name, amount, interestRate, months } = loan;
-
-            const r = interestRate / (12 * 100);
-            const emi =
-                (amount * r * Math.pow(1 + r, months)) /
-                (Math.pow(1 + r, months) - 1);
-
-            const dueDate = new Date();
-            dueDate.setMonth(dueDate.getMonth() + 1);
-
-            const emiDoc = {
-                loan_id,
-                name,
-                interestRate,
-                dueDate,
-                status: "Pending",
-                remainingBalance: parseFloat((emi * months).toFixed(2)),
-                penalty: 0,
-                payment_date: null,
-                emi_amount: parseFloat(emi.toFixed(2)),
-                userEmail: req.session.user.email,
-            };
-
-            await emiCollection.updateOne(
-                { loan_id, userEmail: req.session.user.email },
-                { $set: emiDoc },
-                { upsert: true }
-            );
-        }
-        const emiList = await emiCollection
-            .find({ userEmail: req.session.user.email })
-            .toArray();
-
-        res.render("emi", { user: req.session.user, emiList });
-    } catch (error) {
-        console.error("Error processing EMI:", error);
-        req.session.msg = "An error occurred while processing EMI";
-        res.render("emi", { user: req.session.user, emiList: [] });
-    }
-});
-
-app.get("/expenses", async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect("/login");
-    }
-
-    try {
-        const expensesCollection = db.collection("expenses");
-        const expensesList = await expensesCollection
-            .find({ user_id: req.session.user.email })
-            .toArray();
-
-        const formattedExpenses = expensesList.map((expense) => ({
-            ...expense,
-            dateOfPurchase:
-                expense.dateOfPurchase instanceof Date
-                    ? expense.dateOfPurchase
-                    : new Date(expense.dateOfPurchase),
-        }));
-
-        res.render("expenses", {
-            user: req.session.user,
-            expenses: formattedExpenses,
-            msg: req.session.msg,
+        await db.collection("users").insertOne({
+            username,
+            email,
+            password, // Note: In a real application, you should hash the password
+            createdAt: new Date(),
         });
-        req.session.msg = "";
+        res.redirect("/user?msg=User added successfully");
     } catch (error) {
-        console.error("Error fetching expenses:", error);
-        req.session.msg = "An error occurred while fetching expenses";
-        res.render("expenses", {
-            user: req.session.user,
-            expenses: [],
-            msg: req.session.msg,
-        });
-    }
-});
-
-app.get("/addExpenses", (req, res) => {
-    if (!req.session.user) {
-        return res.redirect("/login");
-    }
-
-    res.render("addExpenses", { user: req.session.user });
-});
-
-app.post("/addexpensesSubmit", async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect("/login");
-    }
-
-    const expenses = db.collection("expenses");
-
-    try {
-        const result = await expenses.insertOne({
-            user_id: req.session.user.email, // Add this line to store the user_id
-            name: req.body.name,
-            category: req.body.categoryType,
-            amount: parseFloat(req.body.amount),
-            dateOfPurchase: new Date(req.body.dop),
-            description: req.body.description,
-        });
-
-        if (result.acknowledged) {
-            req.session.msg = "Expense added successfully";
-            res.redirect("/expenses");
-        } else {
-            req.session.msg = "Failed to add expense";
-            res.redirect("/addExpenses");
-        }
-    } catch (error) {
-        console.error("Error adding expense:", error);
-        req.session.msg = "An error occurred while adding the expense";
-        res.redirect("/addExpenses");
-    }
-});
-
-app.get("/editExpenses", async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect("/login");
-    }
-
-    const expenseId = req.query.id;
-    const expenses = db.collection("expenses");
-
-    try {
-        const expense = await expenses.findOne({
-            _id: new ObjectId(expenseId),
-            user_id: req.session.user.email,
-        });
-
-        if (expense) {
-            res.render("editExpenses", {
-                user: req.session.user,
-                expense: expense,
-            });
-        } else {
-            req.session.msg = "Expense not found";
-            res.redirect("/expenses");
-        }
-    } catch (error) {
-        console.error("Error fetching expense for edit:", error);
-        req.session.msg = "An error occurred while fetching the expense";
-        res.redirect("/expenses");
-    }
-});
-
-app.get("/deleteExpenses", async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect("/login");
-    }
-
-    const expenseId = req.query.id;
-    const expenses = db.collection("expenses");
-
-    try {
-        const result = await expenses.deleteOne({
-            _id: new ObjectId(expenseId),
-            user_id: req.session.user.email,
-        });
-
-        if (result.deletedCount === 1) {
-            req.session.msg = "Expense deleted successfully";
-        } else {
-            req.session.msg = "Failed to delete expense";
-        }
-    } catch (error) {
-        console.error("Error deleting expense:", error);
-        req.session.msg = "An error occurred while deleting the expense";
-    }
-
-    res.redirect("/expenses");
-});
-
-app.post("/editExpensesSubmit", async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect("/login");
-    }
-
-    const expenses = db.collection("expenses");
-
-    try {
-        const dateOfPurchase = new Date(req.body.dop);
-
-        if (isNaN(dateOfPurchase.getTime())) {
-            req.session.msg = "Invalid date format";
-            return res.redirect("/editExpenses?id=" + req.body.expenseId);
-        }
-
-        const result = await expenses.updateOne(
-            {
-                _id: new ObjectId(req.body.expenseId),
-                user_id: req.session.user.email,
-            },
-            {
-                $set: {
-                    name: req.body.name,
-                    category: req.body.categoryType,
-                    amount: parseFloat(req.body.amount),
-                    dateOfPurchase: dateOfPurchase, // Store as Date object
-                    description: req.body.description,
-                },
-            }
-        );
-
-        if (result.modifiedCount === 1) {
-            req.session.msg = "Expense updated successfully";
-        } else {
-            req.session.msg = "Failed to update expense";
-        }
-    } catch (error) {
-        console.error("Error updating expense:", error);
-        req.session.msg = "An error occurred while updating the expense";
-    }
-
-    res.redirect("/expenses");
-});
-
-app.get("/profile", async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect("/login");
-    }
-
-    try {
-        const usersCollection = db.collection("users");
-        const usersList = await usersCollection.find({}).toArray();
-
-        res.render("profile", {
-            user: req.session.user,
-            users: usersList,
-            msg: req.session.msg || "", // Use an empty string if msg is undefined
-        });
-        req.session.msg = ""; // Clear the message after rendering
-    } catch (error) {
-        console.error("Error fetching users:", error);
-        res.render("profile", {
-            user: req.session.user,
-            users: [],
-            msg: "An error occurred while fetching users",
-        });
+        console.error(error);
+        res.status(500).send("Error adding user");
     }
 });
 
 app.get("/editUser", async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect("/login");
-    }
-
     const userId = req.query.id;
-    const usersCollection = db.collection("users");
-
     try {
-        const user = await usersCollection.findOne({
-            _id: new ObjectId(userId),
-        });
-
-        if (user) {
-            res.render("editUser", {
-                user: req.session.user,
-                editUser: user,
-            });
-        } else {
-            req.session.msg = "User not found";
-            res.redirect("/profile");
-        }
+        const user = await db
+            .collection("users")
+            .findOne({ _id: new ObjectId(userId) });
+        res.render("editUser", { editUser: user });
     } catch (error) {
-        console.error("Error fetching user for edit:", error);
-        req.session.msg = "An error occurred while fetching the user";
-        res.redirect("/profile");
+        console.error(error);
+        res.status(500).send("Error fetching user");
     }
 });
 
 app.post("/editUserSubmit", async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect("/login");
-    }
-
-    const usersCollection = db.collection("users");
-    const { userId, username, email, newPassword, confirmPassword } = req.body;
-
+    const { userId, username, email, newPassword } = req.body;
     try {
-        const updateData = {
-            username: username,
-            email: email,
-        };
-
-        if (newPassword && confirmPassword) {
-            if (newPassword !== confirmPassword) {
-                req.session.msg = "Passwords do not match";
-                return res.redirect(`/editUser?id=${userId}`);
-            }
-            updateData.password = newPassword;
+        const updateData = { username, email };
+        if (newPassword) {
+            updateData.password = newPassword; // Note: In a real application, you should hash the password
         }
-
-        const result = await usersCollection.updateOne(
-            { _id: new ObjectId(userId) },
-            { $set: updateData }
-        );
-
-        if (result.modifiedCount === 1) {
-            req.session.msg = "User updated successfully";
-        } else {
-            req.session.msg = "No changes were made to the user";
-        }
+        await db
+            .collection("users")
+            .updateOne({ _id: new ObjectId(userId) }, { $set: updateData });
+        res.redirect("/user?msg=User updated successfully");
     } catch (error) {
-        console.error("Error updating user:", error);
-        req.session.msg = "An error occurred while updating the user";
+        console.error(error);
+        res.status(500).send("Error updating user");
     }
-
-    res.redirect("/profile");
 });
 
 app.get("/deleteUser", async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect("/login");
-    }
-
     const userId = req.query.id;
-    const usersCollection = db.collection("users");
-
     try {
-        const result = await usersCollection.deleteOne({
-            _id: new ObjectId(userId),
-        });
-
-        if (result.deletedCount === 1) {
-            req.session.msg = "User deleted successfully";
-        } else {
-            req.session.msg = "Failed to delete user";
-        }
+        await db.collection("users").deleteOne({ _id: new ObjectId(userId) });
+        res.redirect("/user?msg=User deleted successfully");
     } catch (error) {
-        console.error("Error deleting user:", error);
-        req.session.msg = "An error occurred while deleting the user";
+        console.error(error);
+        res.status(500).send("Error deleting user");
     }
+});
 
-    res.redirect("/profile");
+app.get("/loan", async (req, res) => {
+    try {
+        const loans = await db.collection("loans").find().toArray();
+        res.render("loan", { loans, msg: req.query.msg });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error fetching loans");
+    }
+});
+
+app.get("/addLoan", (req, res) => {
+    res.render("addLoan");
+});
+
+app.post("/addLoanSubmit", async (req, res) => {
+    const { name, loanType, amount, months, lender_id } = req.body;
+    try {
+        const loanId = new ObjectId();
+        const interestRate = getInterestRate(loanType);
+        const totalAmount = calculateTotalAmount(amount, interestRate, months);
+
+        await db.collection("loans").insertOne({
+            _id: loanId,
+            loan_id: Date.now().toString(),
+            name,
+            loanType,
+            amount: parseFloat(amount),
+            interestRate,
+            months: parseInt(months),
+            totalAmount,
+            lender_id,
+        });
+        res.redirect("/loan?msg=Loan added successfully");
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error adding loan");
+    }
+});
+
+app.get("/editLoan", async (req, res) => {
+    const loanId = req.query.id;
+    try {
+        const loan = await db
+            .collection("loans")
+            .findOne({ _id: new ObjectId(loanId) });
+        res.render("editLoan", { editLoan: loan });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error fetching loan");
+    }
+});
+
+app.post("/editLoanSubmit", async (req, res) => {
+    const { loanId, name, loanType, amount, months, lender_id } = req.body;
+    try {
+        const interestRate = getInterestRate(loanType);
+        const totalAmount = calculateTotalAmount(amount, interestRate, months);
+
+        await db.collection("loans").updateOne(
+            { _id: new ObjectId(loanId) },
+            {
+                $set: {
+                    name,
+                    loanType,
+                    amount: parseFloat(amount),
+                    interestRate,
+                    months: parseInt(months),
+                    totalAmount,
+                    lender_id,
+                },
+            }
+        );
+        res.redirect("/loan?msg=Loan updated successfully");
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error updating loan");
+    }
+});
+
+app.get("/deleteLoan", async (req, res) => {
+    const loanId = req.query.id;
+    try {
+        await db.collection("loans").deleteOne({ _id: new ObjectId(loanId) });
+        res.redirect("/loan?msg=Loan deleted successfully");
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error deleting loan");
+    }
+});
+
+function getInterestRate(loanType) {
+    const rates = {
+        Personal: 10,
+        Home: 8,
+        Gold: 7,
+        Vehicle: 9,
+    };
+    return rates[loanType] || 10;
+}
+
+function calculateTotalAmount(principal, rate, months) {
+    const r = rate / 100 / 12;
+    const n = months;
+    const totalAmount =
+        ((principal * (r * Math.pow(1 + r, n))) / (Math.pow(1 + r, n) - 1)) * n;
+    return parseFloat(totalAmount.toFixed(2));
+}
+
+app.get("/expenses", async (req, res) => {
+    try {
+        const expenses = await db.collection("expenses").find().toArray();
+        res.render("expenses", { expenses, msg: req.query.msg });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error fetching expenses");
+    }
+});
+
+app.get("/addExpenses", (req, res) => {
+    res.render("addExpenses");
+});
+
+app.post("/addExpensesSubmit", async (req, res) => {
+    const { name, amount, dateOfPurchase, description } = req.body;
+    try {
+        await db.collection("expenses").insertOne({
+            name,
+            category: req.body.categoryType,
+            amount: parseFloat(amount),
+            dateOfPurchase: new Date(dateOfPurchase),
+            description,
+        });
+        res.redirect("/expenses?msg=Expense added successfully");
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error adding expense");
+    }
+});
+
+app.get("/editExpenses", async (req, res) => {
+    const expenseId = req.query.id;
+    try {
+        const expense = await db
+            .collection("expenses")
+            .findOne({ _id: new ObjectId(expenseId) });
+        res.render("editExpenses", { expense: expense });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error fetching expense");
+    }
+});
+
+app.post("/editExpensesSubmit", async (req, res) => {
+    const { expenseId, name, categoryType, amount, dop, description } =
+        req.body;
+    try {
+        await db.collection("expenses").updateOne(
+            { _id: new ObjectId(expenseId) },
+            {
+                $set: {
+                    name,
+                    category: categoryType,
+                    amount: parseFloat(amount),
+                    dateOfPurchase: new Date(dop),
+                    description,
+                },
+            }
+        );
+        res.redirect("/expenses?msg=Expense updated successfully");
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error updating expense");
+    }
+});
+
+app.get("/deleteExpenses", async (req, res) => {
+    const expenseId = req.query.id;
+    try {
+        await db
+            .collection("expenses")
+            .deleteOne({ _id: new ObjectId(expenseId) });
+        res.redirect("/expenses?msg=Expense deleted successfully");
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error deleting expense");
+    }
+});
+
+app.get("/emi", async (req, res) => {
+    try {
+        const emiList = await db.collection("emi").find().toArray();
+        res.render("emi", { emiList, msg: req.query.msg });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error fetching EMI records");
+    }
+});
+
+app.get("/addEmi", (req, res) => {
+    res.render("addEmi");
+});
+
+app.post("/addEmiSubmit", async (req, res) => {
+    const {
+        userEmail,
+        dueDate,
+        emi_amount,
+        interestRate,
+        remainingBalance,
+        status,
+        nextPaymentDate,
+    } = req.body;
+    try {
+        await db.collection("emi").insertOne({
+            userEmail,
+            dueDate: new Date(dueDate),
+            emi_amount: parseFloat(emi_amount),
+            interestRate: parseFloat(interestRate),
+            remainingBalance: parseFloat(remainingBalance),
+            status,
+            nextPaymentDate: new Date(nextPaymentDate),
+            createdAt: new Date(),
+        });
+        res.redirect("/emi?msg=EMI record added successfully");
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error adding EMI record");
+    }
+});
+
+app.get("/editEmi", async (req, res) => {
+    const emiId = req.query.id;
+    try {
+        const emi = await db
+            .collection("emi")
+            .findOne({ _id: new ObjectId(emiId) });
+        res.render("editEmi", { emi });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error fetching EMI record");
+    }
+});
+
+app.post("/editEmiSubmit", async (req, res) => {
+    const {
+        emiId,
+        userEmail,
+        dueDate,
+        emi_amount,
+        interestRate,
+        remainingBalance,
+        status,
+        nextPaymentDate,
+    } = req.body;
+    try {
+        await db.collection("emi").updateOne(
+            { _id: new ObjectId(emiId) },
+            {
+                $set: {
+                    userEmail,
+                    dueDate: new Date(dueDate),
+                    emi_amount: parseFloat(emi_amount),
+                    interestRate: parseFloat(interestRate),
+                    remainingBalance: parseFloat(remainingBalance),
+                    status,
+                    nextPaymentDate: new Date(nextPaymentDate),
+                    updatedAt: new Date(),
+                },
+            }
+        );
+        res.redirect("/emi?msg=EMI record updated successfully");
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error updating EMI record");
+    }
+});
+
+app.get("/deleteEmi", async (req, res) => {
+    const emiId = req.query.id;
+    try {
+        await db.collection("emi").deleteOne({ _id: new ObjectId(emiId) });
+        res.redirect("/emi?msg=EMI record deleted successfully");
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error deleting EMI record");
+    }
 });
 
 app.listen(PORT, () => {

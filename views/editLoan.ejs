@@ -1,7 +1,8 @@
 <%- include("dashboard")%>
 
-<form action="/addloanSubmit" method="post">
+<form action="/editLoanSubmit" method="post">
     <div class="flex flex-col p-4 w-1/3 gap-5 justify-center m-auto h-[80vh]">
+        <input type="hidden" name="loanId" value="<%= editLoan._id %>">
         <div class="flex justify-between">
             Enter Holders Name
             <input
@@ -10,41 +11,23 @@
                 placeholder="Enter Name"
                 class="rounded-md pl-2 p-1"
                 required
+                value="<%= editLoan.name %>"
             />
         </div>
         <div>
             <h1 class="pb-2">Select Loan Type</h1>
             <div class="flex justify-between">
-                <button
-                    type="button"
-                    class="loan-type border border-gray-300 p-4"
-                    data-type="Personal"
-                >
-                    Personal
-                </button>
-                <button
-                    type="button"
-                    class="loan-type border border-gray-300 p-4"
-                    data-type="Home"
-                >
-                    Home
-                </button>
-                <button
-                    type="button"
-                    class="loan-type border border-gray-300 p-4"
-                    data-type="Gold"
-                >
-                    Gold
-                </button>
-                <button
-                    type="button"
-                    class="loan-type border border-gray-300 p-4"
-                    data-type="Vehicle"
-                >
-                    Vehicle
-                </button>
+                <% ['Personal', 'Home', 'Gold', 'Vehicle'].forEach(type => { %>
+                    <button
+                        type="button"
+                        class="loan-type border border-gray-300 p-4 <%= editLoan.loanType === type ? 'bg-black text-white' : '' %>"
+                        data-type="<%= type %>"
+                    >
+                        <%= type %>
+                    </button>
+                <% }) %>
             </div>
-            <input type="hidden" name="loanType" id="loanType" required />
+            <input type="hidden" name="loanType" id="loanType" value="<%= editLoan.loanType %>" required />
         </div>
         <div class="flex justify-between">
             Enter Amount
@@ -54,53 +37,35 @@
                 placeholder="Enter Amount"
                 class="rounded-md pl-2 p-1"
                 required
+                value="<%= editLoan.amount %>"
             />
         </div>
         <div>
             <h1 class="pb-2">Select Tenure</h1>
             <div class="flex justify-between">
-                <button
-                    type="button"
-                    class="tenure border border-gray-300 p-4"
-                    data-months="6"
-                >
-                    6M
-                </button>
-                <button
-                    type="button"
-                    class="tenure border border-gray-300 p-4"
-                    data-months="12"
-                >
-                    12M
-                </button>
-                <button
-                    type="button"
-                    class="tenure border border-gray-300 p-4"
-                    data-months="24"
-                >
-                    24M
-                </button>
-                <button
-                    type="button"
-                    class="tenure border border-gray-300 p-4"
-                    data-months="36"
-                >
-                    36M
-                </button>
+                <% [6, 12, 24, 36].forEach(month => { %>
+                    <button
+                        type="button"
+                        class="tenure border border-gray-300 p-4 <%= editLoan.months === month ? 'bg-black text-white' : '' %>"
+                        data-months="<%= month %>"
+                    >
+                        <%= month %>M
+                    </button>
+                <% }) %>
             </div>
-            <input type="hidden" name="months" id="months" required />
+            <input type="hidden" name="months" id="months" value="<%= editLoan.months %>" required />
         </div>
         <div class="flex justify-between">
             Select Bank
             <select name="lender_id" class="rounded-md pl-2 p-1" required>
                 <option value="">Select a bank</option>
-                <option value="bank1">Bank 1</option>
-                <option value="bank2">Bank 2</option>
-                <option value="bank3">Bank 3</option>
+                <option value="bank1" <%= editLoan.lender_id === 'bank1' ? 'selected' : '' %>>Bank 1</option>
+                <option value="bank2" <%= editLoan.lender_id === 'bank2' ? 'selected' : '' %>>Bank 2</option>
+                <option value="bank3" <%= editLoan.lender_id === 'bank3' ? 'selected' : '' %>>Bank 3</option>
             </select>
         </div>
         <button type="submit" class="bg-black text-white rounded-md p-2">
-            Submit
+            Update Loan
         </button>
     </div>
 </form>

@@ -1,0 +1,109 @@
+<%- include("dashboard")%>
+
+<form action="/addEMISubmit" method="post">
+    <div class="flex flex-col p-4 w-1/3 gap-5 justify-center m-auto h-[80vh]">
+        <div class="flex items-center justify-between">
+            <label for="userEmail" class="block text-gray-700 text-sm font-bold"
+                >User Email</label
+            >
+            <input
+                type="email"
+                id="userEmail"
+                name="userEmail"
+                required
+                placeholder="Enter User Email"
+                class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            />
+        </div>
+        <div class="flex items-center justify-between">
+            <label for="dueDate" class="block text-gray-700 text-sm font-bold"
+                >Due Date</label
+            >
+            <input
+                type="date"
+                id="dueDate"
+                name="dueDate"
+                required
+                class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            />
+        </div>
+        <div class="flex items-center justify-between">
+            <label
+                for="emi_amount"
+                class="block text-gray-700 text-sm font-bold"
+                >EMI Amount</label
+            >
+            <input
+                type="number"
+                id="emi_amount"
+                name="emi_amount"
+                required
+                placeholder="Enter EMI Amount"
+                class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            />
+        </div>
+        <div class="flex items-center justify-between">
+            <label
+                for="interestRate"
+                class="block text-gray-700 text-sm font-bold"
+                >Interest Rate</label
+            >
+            <input
+                type="number"
+                id="interestRate"
+                name="interestRate"
+                step="0.01"
+                required
+                placeholder="Enter Interest Rate"
+                class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            />
+        </div>
+        <div class="flex items-center justify-between">
+            <label
+                for="remainingBalance"
+                class="block text-gray-700 text-sm font-bold"
+                >Remaining Balance</label
+            >
+            <input
+                type="number"
+                id="remainingBalance"
+                name="remainingBalance"
+                required
+                placeholder="Enter Remaining Balance"
+                class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            />
+        </div>
+        <div class="flex items-center justify-between">
+            <label for="status" class="block text-gray-700 text-sm font-bold"
+                >Status</label
+            >
+            <select
+                id="status"
+                name="status"
+                required
+                class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            >
+                <option value="Pending">Pending</option>
+                <option value="Paid">Paid</option>
+                <option value="Overdue">Overdue</option>
+            </select>
+        </div>
+        <div class="flex items-center justify-between">
+            <label
+                for="nextPaymentDate"
+                class="block text-gray-700 text-sm font-bold"
+                >Next Payment Date</label
+            >
+            <input
+                type="date"
+                id="nextPaymentDate"
+                name="nextPaymentDate"
+                required
+                class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            />
+        </div>
+        <button type="submit" class="bg-black text-white rounded-md p-2">
+            Submit
+        </button>
+    </div>
+</form>

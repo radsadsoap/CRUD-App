@@ -9,54 +9,25 @@
                 padding: 0;
                 text-decoration: none;
             }
-            .auth-button {
-                color: white;
-                border-radius: 10px;
-                background-color: black;
-                padding: 5px 20px;
-            }
             input {
                 outline: none;
             }
         </style>
         <script src="https://cdn.tailwindcss.com"></script>
-        <script>
-            function redirect() {
-                window.location.href = "/profile";
-            }
-        </script>
     </head>
-    <body class="bg-gray-100 h-screen">
+    <body class="bg-gray-100">
         <div
-            class="p-4 flex text-lg bg-white rounded-md justify-between items-center rounded-b-lg shadow-md"
+            class="flex justify-between mx-8 mt-4 p-4 border border-gray-300 rounded-xl bg-white text-xl"
         >
-            <button
-                class="rounded-md border border-gray-300 px-2 text-left"
-                onclick="redirect()"
-            >
-                <% if (typeof user !== 'undefined' && user) { %>
-                <h3 class="font-bold">Welcome <%= user.name %>!</h3>
-                <p><%= user.email %></p>
-                <% } %>
-            </button>
-
-            <div class="flex gap-4 items-center">
-                <div
-                    class="flex gap-4 px-4 py-1 border border-gray-300 rounded-md"
-                >
-                    <a href="/loan">Loan</a>
-                    /
-                    <a href="/emi">Emi</a>
-                    /
-                    <a href="/expenses">Expenses</a>
-                </div>
-                <div>
-                    <% if (typeof user !== 'undefined' && user) { %>
-                    <a href="/logout" class="auth-button">Logout</a>
-                    <% } else { %>
-                    <a href="/login" class="auth-button">Login</a>
-                    <% } %>
-                </div>
+            <h1>FinanceFlow</h1>
+            <div class="flex gap-4">
+                <a href="/user">User</a>
+                /
+                <a href="/loan">Loan</a>
+                /
+                <a href="/emi">Emi</a>
+                /
+                <a href="/expenses">Expenses</a>
             </div>
         </div>
     </body>
