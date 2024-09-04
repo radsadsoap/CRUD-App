@@ -381,6 +381,98 @@ app.get("/deleteEmi", async (req, res) => {
     }
 });
 
+app.get("/stocks", async (req, res) => {
+    try {
+        const stocks = await db.collection("stocks").find().toArray();
+        res.render("stocks", { stocks, msg: req.query.msg });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error fetching stocks");
+    }
+});
+
+app.get("/addStock", (req, res) => {
+    res.render("addStocks");
+});
+
+app.post("/addStockSubmit", async (req, res) => {
+    const {
+        stock_symbol,
+        quantity,
+        purchase_price,
+        purchase_date,
+        current_price,
+    } = req.body;
+    try {
+        await db.collection("stocks").insertOne({
+            stock_symbol,
+            quantity: parseInt(quantity),
+            purchase_price: parseFloat(purchase_price),
+            purchase_date: new Date(purchase_date),
+            current_price: parseFloat(current_price),
+            createdAt: new Date(),
+        });
+        res.redirect("/stocks?msg=Stock added successfully");
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error adding stock");
+    }
+});
+
+app.get("/editStock", async (req, res) => {
+    const stockId = req.query.id;
+    try {
+        const stock = await db
+            .collection("stocks")
+            .findOne({ _id: new ObjectId(stockId) });
+        res.render("editStocks", { stock });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error fetching stock");
+    }
+});
+
+app.post("/editStockSubmit", async (req, res) => {
+    const {
+        stockId,
+        stock_symbol,
+        quantity,
+        purchase_price,
+        purchase_date,
+        current_price,
+    } = req.body;
+    try {
+        await db.collection("stocks").updateOne(
+            { _id: new ObjectId(stockId) },
+            {
+                $set: {
+                    stock_symbol,
+                    quantity: parseInt(quantity),
+                    purchase_price: parseFloat(purchase_price),
+                    purchase_date: new Date(purchase_date),
+                    current_price: parseFloat(current_price),
+                    updatedAt: new Date(),
+                },
+            }
+        );
+        res.redirect("/stocks?msg=Stock updated successfully");
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error updating stock");
+    }
+});
+
+app.get("/deleteStock", async (req, res) => {
+    const stockId = req.query.id;
+    try {
+        await db.collection("stocks").deleteOne({ _id: new ObjectId(stockId) });
+        res.redirect("/stocks?msg=Stock deleted successfully");
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error deleting stock");
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`CRUD Server running at http://localhost:${PORT}`);
 });

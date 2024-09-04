@@ -1,0 +1,83 @@
+<%- include("dashboard") %>
+
+<div class="px-10 p-4">
+    <h1 class="text-7xl mb-6">Your Stocks</h1>
+    <a
+        href="/addStock"
+        class="bg-black text-white font-bold py-2 px-4 rounded mb-4 inline-block"
+    >
+        Add Stock
+    </a>
+</div>
+
+<div class="px-10">
+    <table class="min-w-full bg-white">
+        <tr class="bg-gray-800 text-white">
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Stock Symbol
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Quantity
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Purchase Price
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Purchase Date
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Current Price
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Profit/Loss
+            </th>
+            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">
+                Actions
+            </th>
+        </tr>
+        <tbody class="text-gray-700">
+            <% if (stocks && stocks.length > 0) { %> <% stocks.forEach(stock =>
+            { %> <% const profitLoss = (stock.current_price -
+            stock.purchase_price) * stock.quantity; const profitLossClass =
+            profitLoss >= 0 ? 'text-green-600' : 'text-red-600'; const
+            profitLossSign = profitLoss >= 0 ? '+' : '-'; %>
+            <tr>
+                <td class="text-left py-3 px-4"><%= stock.stock_symbol %></td>
+                <td class="text-left py-3 px-4"><%= stock.quantity %></td>
+                <td class="text-left py-3 px-4">
+                    ₹<%= stock.purchase_price.toFixed(2) %>
+                </td>
+                <td class="text-left py-3 px-4">
+                    <%= stock.purchase_date.toLocaleDateString() %>
+                </td>
+                <td class="text-left py-3 px-4">
+                    ₹<%= stock.current_price.toFixed(2) %>
+                </td>
+                <td class="text-left py-3 px-4 <%= profitLossClass %>">
+                    <%= profitLossSign %>₹<%= Math.abs(profitLoss).toFixed(2) %>
+                </td>
+                <td class="text-left py-3 px-4">
+                    <a
+                        href="/editStock?id=<%= stock._id %>"
+                        class="text-blue-500 hover:text-blue-700"
+                        >Edit</a
+                    >
+                    |
+                    <a
+                        href="/deleteStock?id=<%= stock._id %>"
+                        class="text-red-500 hover:text-red-700"
+                        onclick="return confirm('Are you sure you want to delete this stock?')"
+                        >Delete</a
+                    >
+                </td>
+            </tr>
+            <% }); %> <% } else { %>
+            <tr>
+                <td colspan="7" class="text-center py-3 px-4">
+                    No stocks found
+                </td>
+            </tr>
+            <% } %>
+        </tbody>
+    </table>
+</div>
